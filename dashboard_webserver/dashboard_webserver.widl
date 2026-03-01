@@ -1,0 +1,257 @@
+
+// ===== Config =====
+record DashboardConfig {
+    name: string
+}
+
+// ===== Data Structures =====
+
+record Alert {
+    id: string,
+    alert_type: string,       
+    severity: string,         
+    risk_score: u32,
+    entity_id: string,
+    symbol: string,
+    description: string,
+    workflow_id: string,
+    timestamp: u64
+}
+
+record WorkflowExecution {
+    id: string,
+    workflow_type: string,   
+    trigger: string,
+    steps_completed: u32,
+    total_steps: u32,
+    status: string,           
+    started_at: u64,
+    completed_at: u64,
+    result_summary: string
+}
+
+record CaseRecord {
+    case_id: string,
+    case_type: string,        
+    status: string,           
+    priority: string,         
+    subject_entity: string,
+    symbol: string,
+    risk_score: u32,
+    assigned_to: string,
+    created_at: u64,
+    updated_at: u64,
+    summary: string
+}
+
+record SurveillanceStats {
+    total_alerts_today: u32,
+    total_workflows_today: u32,
+    open_cases: u32,
+    high_risk_entities: u32,
+    compliance_score: u32
+}
+
+record RiskEntity {
+    entity_id: string,
+    entity_name: string,
+    risk_score: u32,
+    alert_count: u32,
+    last_alert_at: u64
+}
+
+record HistoryEntry {
+    id: string,
+    timestamp: u64,
+    source_mcp: string,        
+    method_name: string,       
+    params: string,            
+    result_summary: string,    
+    status: string,            
+    entity_id: string,         
+    symbol: string             
+}
+
+// ===== External Records (For Proxy Methods) =====
+
+record Trade {
+    trade_id: string,
+    symbol: string,
+    account_id: string,
+    trade_type: string,
+    quantity: u64,
+    price: string,
+    value: string,
+    exchange: string,
+    segment: string,
+    timestamp: u64,
+    order_id: string
+}
+
+record Entity {
+    entity_id: string,
+    entity_type: string,
+    name: string,
+    pan_number: string,
+    registration_id: string
+}
+
+record Relationship {
+    source_entity_id: string,
+    target_entity_id: string,
+    relationship_type: string,
+    relationship_detail: string,
+    strength: u32,
+    verified: bool
+}
+
+record InsiderStatus {
+    entity_id: string,
+    company_symbol: string,
+    is_insider: bool,
+    insider_type: string,
+    designation: string,
+    window_status: string
+}
+
+record ReportResult {
+    report_id: string,
+    report_type: string,
+    storage_path: string,
+    download_url: string,
+    expires_at: u64,
+    risk_score: u32,
+    success: bool,
+    error: string
+}
+
+record UPSIRecord {
+    upsi_id: string,
+    company_symbol: string,
+    upsi_type: string,
+    description: string,
+    nature: string,
+    created_date: u64,
+    public_date: u64,
+    is_public: bool
+}
+
+record TradingWindowStatus {
+    company_symbol: string,
+    window_status: string,
+    closure_reason: string,
+    closure_start: u64,
+    expected_opening: u64
+}
+
+record TradeAnalysis {
+    symbol: string,
+    total_volume: u64,
+    avg_price: string,
+    high_price: string,
+    low_price: string,
+    buy_volume: u64,
+    sell_volume: u64,
+    trade_count: u32,
+    concentration_ratio: string
+}
+
+// ===== Unified Interface =====
+
+@webserver
+interface DashboardWebserver {
+    config -> DashboardConfig;
+    
+    query func ping() -> string;
+    
+    mutate func push_alert(alert: Alert) -> result<string, string>;
+    
+    mutate func log_workflow_start(
+        workflow_id: string,
+        workflow_type: string,
+        trigger: string,
+        total_steps: u32
+    ) -> result<string, string>;
+    
+    mutate func update_workflow_progress(
+        workflow_id: string,
+        steps_completed: u32,
+        status: string,
+        result_summary: string
+    ) -> result<string, string>;
+    
+    mutate func upsert_case(case_record: CaseRecord) -> result<string, string>;
+    
+    mutate func register_risk_entity(entity: RiskEntity) -> result<string, string>;
+    
+    // ===== QUERY: Called by Frontend UI =====
+    
+    query func get_live_alerts(
+        severity_filter: option<string>,
+        limit: option<u32>
+    ) -> result<list<Alert>, string>;
+    
+    query func get_workflow_history(
+        workflow_type: option<string>,
+        limit: option<u32>
+    ) -> result<list<WorkflowExecution>, string>;
+    
+    query func get_cases_by_status(
+        status: option<string>,
+        limit: option<u32>
+    ) -> result<list<CaseRecord>, string>;
+    
+    query func get_stats() -> result<SurveillanceStats, string>;
+    
+    query func get_high_risk_entities(
+        min_risk_score: option<u32>,
+        limit: option<u32>
+    ) -> result<list<RiskEntity>, string>;
+    
+    query func get_case_details(case_id: string) -> result<CaseRecord, string>;
+    
+    query func get_entity_alerts(
+        entity_id: string,
+        limit: option<u32>
+    ) -> result<list<Alert>, string>;
+    
+    // ===== Proxy Methods (Cross-Contract) =====
+    
+    mutate func get_trades_proxy(
+        symbol: string, 
+        limit: option<u32>
+    ) -> result<list<Trade>, string>;
+
+    mutate func search_entities_proxy(
+        search_query: string
+    ) -> result<list<Entity>, string>;
+
+    mutate func get_relationships_proxy(
+        entity_id: string
+    ) -> result<list<Relationship>, string>;
+
+    mutate func check_insider_proxy(
+        entity_id: string, 
+        company_symbol: string
+    ) -> result<InsiderStatus, string>;
+
+    mutate func get_active_upsi_proxy(
+        company_symbol: string
+    ) -> result<list<UPSIRecord>, string>;
+
+    mutate func get_trading_window_proxy(
+        company_symbol: string
+    ) -> result<TradingWindowStatus, string>;
+
+    mutate func analyze_volume_proxy(
+        symbol: string
+    ) -> result<TradeAnalysis, string>;
+
+    mutate func generate_report_proxy(
+        report_type: string,
+        params: string
+    ) -> result<ReportResult, string>;
+    
+    query func get_tools() -> string;
+    query func get_prompts() -> string
+}

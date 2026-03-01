@@ -1,0 +1,74 @@
+
+record SlackNotifierConfig {
+    webhook_url: string,
+    default_channel: string
+}
+
+
+
+record SlackMessage {
+    channel: string,
+    text: string,
+    username: string,
+    icon_emoji: string
+}
+
+record AlertNotification {
+    alert_id: string,
+    alert_type: string,
+    severity: string,
+    symbol: string,
+    entity_id: string,
+    description: string,
+    risk_score: u32
+}
+
+record NotificationResult {
+    success: bool,
+    message_id: string,
+    timestamp: u64,
+    error: string
+}
+
+
+
+@mcp
+interface SlackNotifier {
+    config -> SlackNotifierConfig;
+
+    query func send_message(
+        channel: string,
+        message: string
+    ) -> result<NotificationResult, string>;
+
+    query func send_alert(
+        alert_type: string,
+        severity: string,
+        symbol: string,
+        entity_id: string,
+        description: string,
+        risk_score: u32
+    ) -> result<NotificationResult, string>;
+
+    query func send_case_update(
+        case_id: string,
+        status: string,
+        update_message: string,
+        assigned_to: string
+    ) -> result<NotificationResult, string>;
+
+    query func send_workflow_complete(
+        workflow_id: string,
+        workflow_type: string,
+        result_summary: string,
+        alert_count: u32
+    ) -> result<NotificationResult, string>;
+
+    query func send_daily_summary(
+        date: string,
+        total_alerts: u32,
+        critical_alerts: u32,
+        open_cases: u32,
+        new_cases: u32
+    ) -> result<NotificationResult, string>
+}

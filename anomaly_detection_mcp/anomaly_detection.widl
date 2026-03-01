@@ -1,0 +1,108 @@
+
+// ===== Configuration =====
+record AnomalyDetectionConfig {
+    dashboard_contract_id: string,
+    alpha_vantage_key: string,
+    taapi_secret: string
+}
+
+// ===== Data Structures =====
+
+record AnomalyResult {
+    entity_id: string,
+    symbol: string,
+    anomaly_type: string,     // "SPOOFING", "WASH_TRADE", "PUMP_DUMP", "FRONT_RUNNING", "VOLUME_SPIKE"
+    confidence_score: u32,
+    details: string,
+    timestamp: u64,
+    supporting_evidence: string
+}
+
+record SpoofingIndicator {
+    order_id: string,
+    is_spoof: bool,
+    cancellation_rate: string,
+    order_size_vs_market: string,
+    price_impact: string
+}
+
+record WashTradeIndicator {
+    entity_id: string,
+    counterparty_id: string,
+    is_wash_trade: bool,
+    volume_match: bool,
+    price_match: bool,
+    time_gap_seconds: u32
+}
+
+record PumpDumpIndicator {
+    symbol: string,
+    is_pump_dump: bool,
+    price_velocity: string,
+    volume_surge: string,
+    social_sentiment_score: i32
+}
+
+// ===== Context Cache Structures =====
+
+record QueryHistory {
+    method_name: string,
+    entity_id: string,
+    symbol: string,
+    timestamp: u64,
+    natural_language_prompt: string
+}
+
+record QueryContext {
+    recent_queries: list<QueryHistory>,
+    last_entity_id: string,
+    last_symbol: string
+}
+
+// ===== MCP Interface =====
+
+@mcp
+interface AnomalyDetection {
+    config -> AnomalyDetectionConfig;
+
+    mutate func get_context() -> QueryContext;
+
+    mutate func detect_spoofing(
+        order_id: string,
+        entity_id: string,
+        symbol: string,
+        order_details: string
+    ) -> result<SpoofingIndicator, string>;
+
+    query func detect_wash_trading(
+        entity_id: string,
+        counterparty_id: string,
+        symbol: string,
+        trade_timestamp: u64
+    ) -> result<WashTradeIndicator, string>;
+
+    mutate func detect_pump_dump(
+        symbol: string,
+        time_window_minutes: u32
+    ) -> result<PumpDumpIndicator, string>;
+
+    query func detect_front_running(
+        entity_id: string,
+        symbol: string,
+        client_trade_timestamp: u64,
+        prop_trade_timestamp: u64
+    ) -> result<AnomalyResult, string>;
+
+    mutate func analyze_volume_anomaly(
+        symbol: string,
+        interval: string
+    ) -> result<AnomalyResult, string>;
+
+    mutate func check_rsi_levels(
+        symbol: string
+    ) -> result<string, string>;
+
+    query func scan_entity_anomalies(
+        entity_id: string
+    ) -> result<list<AnomalyResult>, string>
+}

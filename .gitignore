@@ -1,0 +1,49 @@
+# ===== Secrets & Configuration =====
+# Config files contain API keys, passwords, and contract IDs
+**/config.yaml
+
+# Personal notes with contract addresses and deployment commands
+**/xnote
+
+# ===== Rust / Cargo =====
+# Build output directories (compiled WASM, debug artifacts)
+**/target/
+
+# Cargo.lock is NOT ignored - it should be committed for reproducible builds
+# Cargo.toml is NOT ignored - it's the project manifest (like package.json)
+
+# ===== Node.js =====
+**/node_modules/
+**/dist/
+**/.vite/
+**/.cache/
+
+# ===== OS Files =====
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.iml
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+*.env
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+
+# ===== Compiled Output =====
+*.wasm
+*.d.ts.map
+
+# ===== Misc =====
+*.pdf

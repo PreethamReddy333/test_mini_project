@@ -1,0 +1,141 @@
+
+// ===== Configuration =====
+record RegulatoryReportsConfig {
+    dashboard_contract_id: string,
+    jira_contract_id: string,
+    risk_scoring_contract_id: string,
+    anomaly_detection_contract_id: string,
+    entity_relationship_contract_id: string,
+    supabase_url: string,
+    supabase_service_key: string,
+    supabase_bucket: string,
+    sebi_api_endpoint: string
+}
+
+// ===== Data Structures =====
+
+record STRReport {
+    str_id: string,
+    report_date: string,
+    suspicious_entity_id: string,
+    suspicious_entity_name: string,
+    suspicious_activity_type: string,
+    transaction_details: string,
+    total_value: string,
+    suspicion_reason: string,
+    investigation_summary: string,
+    recommendation: string,
+    risk_score: u32,
+    generated_at: u64
+}
+
+record MarketSurveillanceReport {
+    report_id: string,
+    report_period: string,
+    total_alerts: u32,
+    critical_alerts: u32,
+    investigations_opened: u32,
+    investigations_closed: u32,
+    manipulation_cases: u32,
+    insider_trading_cases: u32,
+    enforcement_actions: u32,
+    summary: string
+}
+
+record ComplianceScorecard {
+    entity_id: string,
+    entity_name: string,
+    reporting_period: string,
+    overall_score: u32,
+    kyc_compliance: u32,
+    aml_compliance: u32,
+    surveillance_compliance: u32,
+    reporting_compliance: u32,
+    violations_count: u32,
+    risk_score: u32,
+    last_updated: u64
+}
+
+record ReportResult {
+    report_id: string,
+    report_type: string,
+    storage_path: string,
+    download_url: string,
+    expires_at: u64,
+    risk_score: u32,
+    success: bool,
+    error: string
+}
+
+// ===== Context Cache Structures =====
+
+record QueryHistory {
+    method_name: string,
+    entity_id: string,
+    company_symbol: string,
+    case_id: string,
+    report_id: string,
+    timestamp: u64,
+    natural_language_prompt: string
+}
+
+record QueryContext {
+    recent_queries: list<QueryHistory>,
+    last_entity_id: string,
+    last_company_symbol: string,
+    last_case_id: string,
+    last_report_id: string
+}
+
+// ===== MCP Interface =====
+
+@mcp
+interface RegulatoryReports {
+    config -> RegulatoryReportsConfig;
+
+    mutate func get_context() -> QueryContext;
+
+    mutate func generate_str(
+        case_id: string,
+        entity_id: string,
+        suspicious_activity_type: string,
+        suspicion_reason: string
+    ) -> result<ReportResult, string>;
+
+    mutate func generate_surveillance_report(
+        from_date: string,
+        to_date: string,
+        report_type: string
+    ) -> result<ReportResult, string>;
+
+    mutate func generate_compliance_scorecard(
+        entity_id: string,
+        period: string
+    ) -> result<ReportResult, string>;
+    mutate func generate_entity_risk_report(
+        entity_id: string
+    ) -> result<ReportResult, string>;
+
+    mutate func generate_gsm_report(
+        report_date: string
+    ) -> result<ReportResult, string>;
+    mutate func generate_esm_report(
+        report_date: string
+    ) -> result<ReportResult, string>;
+
+    mutate func get_pending_strs(
+        limit: u32
+    ) -> result<list<STRReport>, string>;
+    mutate func submit_str(
+        str_id: string
+    ) -> result<ReportResult, string>;
+
+    mutate func generate_investigation_report(
+        case_id: string,
+        include_evidence: bool
+    ) -> result<ReportResult, string>;
+
+    mutate func get_report_url(
+        report_id: string
+    ) -> result<ReportResult, string>
+}

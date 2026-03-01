@@ -1,0 +1,90 @@
+
+// ===== Configuration =====
+record RiskScoringConfig {
+    dashboard_contract_id: string,
+    high_risk_threshold: string,
+    critical_risk_threshold: string
+}
+
+// ===== Data Structures =====
+
+record RiskFactor {
+    factor_name: string,
+    factor_weight: u32,
+    factor_value: string,
+    contribution: u32
+}
+
+record RiskScore {
+    score: u32,
+    risk_level: string,
+    factors: list<RiskFactor>,
+    recommendation: string
+}
+
+record EntityRiskProfile {
+    entity_id: string,
+    overall_score: u32,
+    insider_risk: u32,
+    manipulation_risk: u32,
+    aml_risk: u32,
+    historical_alerts: u32,
+    last_updated: u64
+}
+
+record PatternRiskResult {
+    pattern_type: string,
+    confidence: u32,
+    affected_trades: list<string>,
+    affected_entities: list<string>,
+    risk_score: u32
+}
+
+// ===== MCP Interface =====
+// Note: All input parameters must be primitives for MCP tools
+
+@mcp
+interface RiskScoring {
+    config -> RiskScoringConfig;
+
+    query func calculate_trade_risk(
+        trade_id: string,
+        symbol: string,
+        account_id: string,
+        trade_type: string,
+        quantity: u64,
+        price: string,
+        volume_ratio: string,
+        is_pre_announcement: string,
+        is_connected_entity: string
+    ) -> result<RiskScore, string>;
+
+    query func calculate_entity_risk(
+        entity_id: string,
+        days_back: u32
+    ) -> result<EntityRiskProfile, string>;
+
+    query func evaluate_pattern_risk(
+        pattern_type: string,
+        symbol: string,
+        trade_ids: string,
+        account_ids: string
+    ) -> result<PatternRiskResult, string>;
+
+    query func evaluate_insider_risk(
+        symbol: string,
+        account_id: string,
+        announcement_timestamp: u64,
+        lookback_days: u32
+    ) -> result<RiskScore, string>;
+
+    query func get_risk_factors(
+        target_id: string,
+        target_type: string
+    ) -> result<list<RiskFactor>, string>;
+
+    query func get_symbol_risk(
+        symbol: string,
+        as_of_timestamp: u64
+    ) -> result<RiskScore, string>
+}

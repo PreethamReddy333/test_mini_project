@@ -1,0 +1,97 @@
+
+// ===== Configuration =====
+record EntityRelationshipConfig {
+    dashboard_contract_id: string,
+    neo4j_uri: string,
+    neo4j_user: string,
+    neo4j_password: string
+}
+
+// ===== Data Structures =====
+
+record Entity {
+    entity_id: string,
+    entity_type: string,
+    name: string,
+    pan_number: string,
+    registration_id: string
+}
+
+record Relationship {
+    source_entity_id: string,
+    target_entity_id: string,
+    relationship_type: string,
+    relationship_detail: string,
+    strength: u32,
+    verified: bool
+}
+
+record EntityConnection {
+    entity_id: string,
+    connected_entity_id: string,
+    connection_path: string,
+    hops: u32,
+    relationship_types: string
+}
+
+record InsiderStatus {
+    entity_id: string,
+    company_symbol: string,
+    is_insider: bool,
+    insider_type: string,
+    designation: string,
+    window_status: string
+}
+
+// ===== Context Cache Structures =====
+
+record QueryHistory {
+    method_name: string,
+    entity_id: string,
+    company_symbol: string,
+    timestamp: u64,
+    natural_language_prompt: string
+}
+
+record QueryContext {
+    recent_queries: list<QueryHistory>,
+    last_entity_id: string,
+    last_company_symbol: string
+}
+
+// ===== MCP Interface =====
+
+@mcp
+interface EntityRelationship {
+    config -> EntityRelationshipConfig;
+    mutate func get_context() -> QueryContext;
+    mutate func get_entity(
+        entity_id: string
+    ) -> result<Entity, string>;
+    mutate func search_entities(
+        search_query: string,
+        limit: u32
+    ) -> result<list<Entity>, string>;
+    mutate func get_relationships(
+        entity_id: string
+    ) -> result<list<Relationship>, string>;
+    mutate func get_connected_entities(
+        entity_id: string,
+        max_hops: u32
+    ) -> result<list<EntityConnection>, string>;
+    mutate func check_insider_status(
+        entity_id: string,
+        company_symbol: string
+    ) -> result<InsiderStatus, string>;
+    mutate func get_company_insiders(
+        company_symbol: string
+    ) -> result<list<InsiderStatus>, string>;
+    mutate func are_entities_connected(
+        entity_id_1: string,
+        entity_id_2: string,
+        max_hops: u32
+    ) -> result<EntityConnection, string>;
+    mutate func get_family_members(
+        entity_id: string
+    ) -> result<list<Entity>, string>
+}
